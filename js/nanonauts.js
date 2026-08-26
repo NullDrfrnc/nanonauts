@@ -138,10 +138,10 @@ class Nanonauts {
 
         Engine.get_instance().add_engine_object(this.nanonaut, 12)
 
-        Engine.get_instance().add_engine_object(platform, 13)
-        const laser = new Laser()
-        laser.x = Settings.CANVAS_WIDTH + 600
-        Engine.get_instance().add_engine_object(laser, 13)
+        //Engine.get_instance().add_engine_object(platform, 13)
+        //const laser = new Laser()
+        //laser.x = Settings.CANVAS_WIDTH + 600
+        //Engine.get_instance().add_engine_object(laser, 13)
 
         Engine.get_instance().add_engine_object(this.robot_spawner, 14)
         Engine.get_instance().add_engine_object(this.flying_robot_spawner, 14)
