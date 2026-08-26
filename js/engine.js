@@ -109,29 +109,50 @@ class Engine {
 
     remove_all_objects() {
         this.#engine_objects.forEach(eo => this.remove_engine_object(eo))
+
+        this.#physics_accumulator = 0
+        this.#last_time = 0
     }
 
     #check_collisions() {
         const collidables = this.#engine_objects.filter(eo => eo.collision)
+        const collisions = new Map()
+
+        collidables.forEach(eo => {
+            collisions.set(eo, [])
+        })
 
         for (let i = 0; i < collidables.length; i++) {
             for (let j = i + 1; j < collidables.length; j++) {
                 const a = collidables[i]
                 const b = collidables[j]
 
-                if (a.aabb_intersects(b)) {
-                    a.on_collision(b);
-                    b.on_collision(a);
-                }
+                if (!a.aabb_intersects(b))
+                    continue
 
+                collisions.get(a).push(b)
+                collisions.get(b).push(a)
             }
         }
+
+        collisions.forEach((others, object) => {
+            if (others.length === 0) {
+                object.not_colliding()
+                return
+            }
+
+            object.on_collisions(others)
+        })
     }
 
     // The main loop which calls process and physics_process on each object passed into context
     #engine_process_loop(current_time) {
-        const delta = current_time - this.#last_time;
-        this.#last_time = current_time;
+        if (this.#last_time === 0) {
+            this.#last_time = current_time
+        }
+
+        const delta = current_time - this.#last_time
+        this.#last_time = current_time
 
         if (!this.paused) {
             this.#physics_accumulator += delta;
@@ -163,6 +184,7 @@ class Engine {
             .forEach(engine_object => {
                 engine_object.process()
                 engine_object.draw(this.get_context_2d())
+                if(engine_object.debug) engine_object.draw_debug(this.get_context_2d())
             })
 
         window.requestAnimationFrame((t) => this.#engine_process_loop(t))
@@ -182,15 +204,17 @@ class EngineObject {
     height = 0
     x = 0
     y = 0
-    previous_x = 0
-    previous_y = 0
     layer = 0
 
     collision = false;
+    collision_priority = 0;
     hitbox_x = null
     hitbox_y = null
     hitbox_offset_x = 0
     hitbox_offset_y = 0
+
+    debug = false
+    debug_color = "#4fb710"
 
     // Called when object enters canvas
     init() {
@@ -202,6 +226,22 @@ class EngineObject {
 
     draw(ctx) {
     }
+
+    draw_debug(ctx) {
+        if (!this.debug)
+            return;
+
+        ctx.strokeStyle = this.debug_color;
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            this.get_hitbox_x(),
+            this.get_hitbox_y(),
+            this.get_hitbox_width(),
+            this.get_hitbox_height()
+        );
+    }
+
 
     // Called each physics frame/tick
     physics_process(delta) {
@@ -219,8 +259,11 @@ class EngineObject {
     on_touch_released() {
     }
 
-    on_collision(other) {
+    on_collisions(others) {
     }
+
+    not_colliding() {}
+
     // AABB collision check, including potention hitbox and offset
     aabb_intersects(other) {
         const a_x = this.get_hitbox_x();

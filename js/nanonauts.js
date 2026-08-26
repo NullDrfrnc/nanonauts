@@ -1,7 +1,8 @@
-//todo: Add the ability to move the player ✅
-//todo: Add flying platforms
-//todo: Add laser
-//todo: Add ability to move playforms with arrow keys?
+//todo: Make random event spawner
+//todo: make events
+//todo: make laser event with platform
+//todo: Replace kelvin (maybe)
+//todo: Add buttons for mobile version
 
 class Nanonauts {
     static bush_spawner_1;
@@ -29,8 +30,8 @@ class Nanonauts {
 
     static start() {
         let platform = new Platform()
-        platform.y = 200
-        platform.x = Settings.CANVAS_WIDTH + 100
+        platform.y = 150
+        platform.x = Settings.CANVAS_WIDTH - 150
 
         this.game_over = false
 
@@ -137,7 +138,10 @@ class Nanonauts {
 
         Engine.get_instance().add_engine_object(this.nanonaut, 12)
 
-        // Engine.get_instance().add_engine_object(platform, 13) WIP
+        Engine.get_instance().add_engine_object(platform, 13)
+        const laser = new Laser()
+        laser.x = Settings.CANVAS_WIDTH + 600
+        Engine.get_instance().add_engine_object(laser, 13)
 
         Engine.get_instance().add_engine_object(this.robot_spawner, 14)
         Engine.get_instance().add_engine_object(this.flying_robot_spawner, 14)
@@ -291,10 +295,14 @@ class Nanonaut extends SpriteSheetEngineObject {
         }
     }
 
-    on_collision(other) {
-        if (other instanceof Ground) {
+    on_collisions(others) {
+        const ground = others.find(
+            other => other instanceof Ground
+        )
+
+        if (ground) {
             this.is_grounded = true
-            this.y = other.get_hitbox_y() - this.height
+            this.y = ground.get_hitbox_y() - this.height
         }
     }
 
@@ -412,23 +420,17 @@ class Nanonaut extends SpriteSheetEngineObject {
             `${Nanonaut.get_move_distance()}m`
 
         if (this.#move_right) {
-            let new_x =
-                this.x + Settings.MOVE_FORCE * delta
+            let new_x = this.x + Settings.MOVE_FORCE * delta
 
-            if (
-                new_x >=
-                Settings.CANVAS_WIDTH - this.width
-            ) {
-                new_x =
-                    Settings.CANVAS_WIDTH - this.width
+            if (new_x >= Settings.CANVAS_WIDTH - this.width) {
+                new_x = Settings.CANVAS_WIDTH - this.width
             }
 
             this.x = new_x
         }
 
         if (this.#move_left) {
-            let new_x =
-                this.x - Settings.MOVE_FORCE * delta
+            let new_x = this.x - Settings.MOVE_FORCE * 2 * delta
 
             if (new_x <= 0) {
                 new_x = 0
@@ -472,9 +474,13 @@ class Robot extends SpriteSheetEngineObject {
         this.y = 525
     }
 
-    on_collision(other) {
-        if (other instanceof Nanonaut) {
-            other.damage(this.#damage)
+    on_collisions(others) {
+        const nanonaut = others.find(
+            other => other instanceof Nanonaut
+        )
+
+        if (nanonaut) {
+            nanonaut.damage(this.#damage)
             this.death()
         }
     }
@@ -744,24 +750,106 @@ class BushSpawner extends EngineObjectSpawnerEngineObject {
 }
 
 class Platform extends SpriteEngineObject {
-    init() {
-        this.sprite.src = "assets/platform.png"
-        this.width = 384
-        this.height = 128
+    #speed = 50
 
-        this.hitbox_y = this.width / 2
-        this.hitbox_offset_y = this.width / 2
+    init() {
+        this.collision = true
+
+        this.sprite.src = "assets/platform.png"
+        this.width = 200
+        this.height = 100
+
+        this.hitbox_y = this.height / 2
+        this.hitbox_offset_y = this.height / 2
 
         super.init();
     }
 
     physics_process(delta) {
-        super.physics_process(delta);
+        this.x -= this.#speed * delta
+    }
+}
 
-        this.x -= Settings.MOVE_FORCE / 1.25 * delta
+class Laser extends SpriteEngineObject {
+    #has_damaged = false
+    #blocked = false
 
-        if (this.x + this.width < -100) {
-            Engine.get_instance().remove_engine_object(this)
+    tip_sprite = new Image()
+    #tip_height = 16
+
+    #speed = 150
+
+    #original_y = 0
+
+    init() {
+        this.debug = true
+
+        this.tip_sprite.src = "assets/laser.png"
+        this.sprite.src = "assets/laser_beam.png"
+
+        this.width = 36
+        this.height = Nanonauts.ground.get_hitbox_y()
+
+        this.collision = true
+
+        this.#original_y = this.y
+
+        super.init()
+    }
+
+    physics_process(delta) {
+        this.x -= this.#speed * delta
+    }
+
+    draw(ctx) {
+        let draw_y = this.y - this.#tip_height
+
+        // Beam
+        ctx.drawImage(
+            this.sprite,
+            this.x,
+            draw_y,
+            this.width,
+            this.height
+        )
+
+        // Tip
+        ctx.drawImage(
+            this.tip_sprite,
+            this.x,
+            Math.floor(draw_y + this.height),
+            this.width,
+            this.#tip_height
+        )
+    }
+
+    on_collisions(others) {
+        const platform = others.find(
+            other => other instanceof Platform
+        )
+
+        if (platform) {
+            this.#blocked = true
+
+            this.y =
+                this.#original_y -
+                (Settings.CANVAS_HEIGHT - platform.get_hitbox_y())
+
+            return
         }
+
+        const nanonaut = others.find(
+            other => other instanceof Nanonaut
+        )
+
+        if (nanonaut && !this.#has_damaged) {
+            nanonaut.damage(1)
+            this.#has_damaged = true
+        }
+    }
+
+    not_colliding() {
+        this.#blocked = false
+        this.y = this.#original_y
     }
 }
