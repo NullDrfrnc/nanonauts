@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nanonauts</title>
+
+    <link rel="stylesheet" href="nanonauts.css"/>
+
+    <script src="js/engine.js"></script>
+    <script src="js/nanonauts.js"></script>
+</head>
+
+<script>
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    window.addEventListener("DOMContentLoaded", () => {
+        const physics_step = document.getElementById("physics_step");
+
+        // Probeer opgeslagen instelling te laden
+        const saved_physics_step = localStorage.getItem("nanonauts_physics_step");
+
+        if (saved_physics_step !== null) {
+            Settings.PHYSICS_STEP = Number(saved_physics_step);
+        }
+
+        // Zet de select op de opgeslagen waarde
+        physics_step.value = Settings.PHYSICS_STEP;
+
+        // Sla iedere wijziging op
+        physics_step.addEventListener("change", (event) => {
+            Settings.PHYSICS_STEP = Number(event.target.value);
+
+            localStorage.setItem(
+                "nanonauts_physics_step",
+                Settings.PHYSICS_STEP.toString()
+            );
+        });
+
+        Nanonauts.start();
+    });
+</script>
+
+<body>
+
+<div class="background-grid"></div>
+
+<main id="game_area">
+    <!-- Canvas wordt door de engine toegevoegd -->
+</main>
+
+<aside id="settings">
+
+    <div class="panel-header">
+        <span class="logo">NANONAUTS</span>
+        <span class="version">v1.0</span>
+    </div>
+
+    <div class="panel-section">
+        <div class="section-title">ENGINE</div>
+
+        <label for="physics_step">
+            <span>PHYSICS</span>
+
+            <select name="physics_step" id="physics_step">
+                <option value="5">POTATO</option>
+                <option value="30">PERFORMANCE</option>
+                <option value="60">BALANCED</option>
+                <option value="120">PRECISE</option>
+            </select>
+        </label>
+    </div>
+
+    <div class="panel-section controls">
+        <div class="section-title">CONTROLS</div>
+
+        <div class="control">
+            <span class="key">ESC</span>
+            <span>PAUSE</span>
+        </div>
+
+        <div class="control">
+            <span class="key">A</span><span class="key">◀</span>
+            <span>MOVE RIGHT</span>
+        </div>
+        <div class="control">
+            <span class="key">D</span><span class="key">▶</span>
+            <span>MOVE LEFT</span>
+        </div>
+
+        <div class="control">
+            <span class="key">W</span><span class="key">▲</span><span class="key">SPACE</span>
+            <span>JUMP</span>
+        </div>
+        <div class="control">
+            <span class="key">TIP:</span>
+            <span>HOLD JUMP FOR HIGH JUMP, TAP FOR SHORT JUMP</span>
+        </div>
+    </div>
+</aside>
+
+</body>
+</html>
