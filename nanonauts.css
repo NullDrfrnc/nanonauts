@@ -419,6 +419,7 @@ option {
 @media (max-width: 900px) {
 
     #settings {
+        display: none;
         right: 12px;
         top: auto;
         bottom: 12px;
@@ -441,4 +442,12 @@ option {
                 calc((100vh - 24px) * 4 / 3)
         );
     }
+}
+
+canvas {
+    touch-action: none;
+}
+
+#game_area canvas {
+    touch-action: none;
 }

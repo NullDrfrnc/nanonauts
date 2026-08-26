@@ -33,18 +33,45 @@ class Engine {
         document.getElementById("game_area").appendChild(this.#canvas);
 
         window.requestAnimationFrame((t) => this.#engine_process_loop(t))
-        window.addEventListener('keydown', (e) => {
+
+        // Keyboard input
+        window.addEventListener("keydown", (e) => {
             this.#engine_objects.forEach(eo => {
                 eo.on_key_pressed(e.code)
             })
         })
-        window.addEventListener('keyup', e => {
+
+        window.addEventListener("keyup", (e) => {
             this.#engine_objects.forEach(eo => {
                 eo.on_key_released(e.code)
             })
         })
-    }
 
+        // Touch input
+        this.#canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault()
+
+            this.#engine_objects.forEach(eo => {
+                eo.on_touch_pressed(e.touches[0])
+            })
+        }, { passive: false })
+
+        this.#canvas.addEventListener("touchend", (e) => {
+            e.preventDefault()
+
+            this.#engine_objects.forEach(eo => {
+                eo.on_touch_released()
+            })
+        }, { passive: false })
+
+        this.#canvas.addEventListener("touchcancel", (e) => {
+            e.preventDefault()
+
+            this.#engine_objects.forEach(eo => {
+                eo.on_touch_released()
+            })
+        }, { passive: false })
+    }
     // Returns the instance of the engine
     static get_instance() {
         if (!this.#instance)
@@ -183,11 +210,17 @@ class EngineObject {
     on_key_pressed(key) {
     }
 
-    on_key_released(key) {}
+    on_key_released(key) {
+    }
+
+    on_touch_pressed(touch) {
+    }
+
+    on_touch_released() {
+    }
 
     on_collision(other) {
     }
-
     // AABB collision check, including potention hitbox and offset
     aabb_intersects(other) {
         const a_x = this.get_hitbox_x();

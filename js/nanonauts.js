@@ -292,7 +292,7 @@ class Nanonaut extends SpriteSheetEngineObject {
     }
 
     on_collision(other) {
-        if(other instanceof Ground) {
+        if (other instanceof Ground) {
             this.is_grounded = true
             this.y = other.get_hitbox_y() - this.height
         }
@@ -307,13 +307,19 @@ class Nanonaut extends SpriteSheetEngineObject {
             return
         }
 
-        if ((key === "Space" || key === "ArrowUp" || key === "KeyW") && this.is_grounded) {
+        if (
+            (key === "Space" ||
+                key === "ArrowUp" ||
+                key === "KeyW") &&
+            this.is_grounded
+        ) {
             this.#jump_pressed = true
             this.#jump_held = true
         }
 
         if (key === "Escape") {
-            Engine.get_instance().paused = !Engine.get_instance().paused
+            Engine.get_instance().paused =
+                !Engine.get_instance().paused
 
             if (Engine.get_instance().paused) {
                 Nanonauts.paused_text.text = "Game Paused"
@@ -332,7 +338,11 @@ class Nanonaut extends SpriteSheetEngineObject {
     }
 
     on_key_released(key) {
-        if (key === "Space" || key === "ArrowUp") {
+        if (
+            key === "Space" ||
+            key === "ArrowUp" ||
+            key === "KeyW"
+        ) {
             this.#jump_held = false
         }
 
@@ -343,6 +353,22 @@ class Nanonaut extends SpriteSheetEngineObject {
         if (key === "KeyA" || key === "ArrowLeft") {
             this.#move_left = false
         }
+    }
+
+    // TOUCHSCREEN
+    on_touch_pressed(touch) {
+        if (Nanonauts.game_over) {
+            return
+        }
+
+        if (this.is_grounded) {
+            this.#jump_pressed = true
+            this.#jump_held = true
+        }
+    }
+
+    on_touch_released() {
+        this.#jump_held = false
     }
 
     physics_process(delta) {
@@ -358,8 +384,13 @@ class Nanonaut extends SpriteSheetEngineObject {
 
         if (!this.is_grounded) {
 
-            if (this.#jump_held && this.#jump_time < this.#max_jump_time) {
-                this.velocity_y -= Settings.JUMP_FORCE * delta
+            if (
+                this.#jump_held &&
+                this.#jump_time < this.#max_jump_time
+            ) {
+                this.velocity_y -=
+                    Settings.JUMP_FORCE * delta
+
                 this.#jump_time += delta
             }
 
@@ -368,23 +399,37 @@ class Nanonaut extends SpriteSheetEngineObject {
             this.y += this.velocity_y * delta
         }
 
-        Nanonaut.move_speed += Nanonaut.move_speed / 75 * delta;
-        this.animation_speed = Nanonaut.move_speed / 30
+        Nanonaut.move_speed +=
+            Nanonaut.move_speed / 75 * delta
 
-        Nanonaut.distance_travelled += Nanonaut.move_speed * delta;
-        Nanonauts.distance_ui.text = `${Nanonaut.get_move_distance()}m`
+        this.animation_speed =
+            Nanonaut.move_speed / 30
+
+        Nanonaut.distance_travelled +=
+            Nanonaut.move_speed * delta
+
+        Nanonauts.distance_ui.text =
+            `${Nanonaut.get_move_distance()}m`
 
         if (this.#move_right) {
-            let new_x = this.x + Settings.MOVE_FORCE * delta
-            if (new_x >= Settings.CANVAS_WIDTH - this.width) {
-                new_x = Settings.CANVAS_WIDTH - this.width
+            let new_x =
+                this.x + Settings.MOVE_FORCE * delta
+
+            if (
+                new_x >=
+                Settings.CANVAS_WIDTH - this.width
+            ) {
+                new_x =
+                    Settings.CANVAS_WIDTH - this.width
             }
 
             this.x = new_x
         }
 
         if (this.#move_left) {
-            let new_x = this.x - Settings.MOVE_FORCE * delta
+            let new_x =
+                this.x - Settings.MOVE_FORCE * delta
+
             if (new_x <= 0) {
                 new_x = 0
             }
@@ -395,9 +440,10 @@ class Nanonaut extends SpriteSheetEngineObject {
         this.is_grounded = false
     }
 
-    // Move distance in meters
     static get_move_distance() {
-        return (Nanonaut.distance_travelled / 300).toFixed(0)
+        return (
+            Nanonaut.distance_travelled / 300
+        ).toFixed(0)
     }
 }
 
