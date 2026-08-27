@@ -1,8 +1,3 @@
-//todo: Make random event spawner
-//todo: make events
-//todo: make laser event with platform
-//todo: bugfix, robots can damage twice?
-
 class Nanonauts {
     static bush_spawner_1;
     static bush_spawner_2;
@@ -563,6 +558,7 @@ class FlyingRobot extends Robot {
     }
 }
 
+// I hate this whole class with every fiber of my being, but I just needed it to work 🥺👉👈
 class Healthbar extends EngineObject {
     hp_offset = 36 * 2
 
@@ -579,6 +575,7 @@ class Healthbar extends EngineObject {
     }
 
     damage() {
+        // I'm pretty sure this is a crime in multiple countries
         if (this.hp3.sprite.src.endsWith("hp_full.png")) {
             this.hp3.sprite.src = "assets/hp_empty.png"
         } else if (this.hp2.sprite.src.endsWith("hp_full.png")) {
