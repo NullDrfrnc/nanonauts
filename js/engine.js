@@ -172,8 +172,14 @@ class Engine {
             .sort((a, b) => a.layer - b.layer)
             .forEach(engine_object => {
                 engine_object.process()
-                engine_object.draw(this.get_context_2d())
-                if(engine_object.debug) engine_object.draw_debug(this.get_context_2d())
+
+                if (engine_object.visible) {
+                    engine_object.draw(this.get_context_2d())
+
+                    if (engine_object.debug) {
+                        engine_object.draw_debug(this.get_context_2d())
+                    }
+                }
             })
 
         window.requestAnimationFrame((t) => this.#engine_process_loop(t))
@@ -240,6 +246,8 @@ class EngineObject {
     hitbox_y = null
     hitbox_offset_x = 0
     hitbox_offset_y = 0
+
+    visible = true
 
     debug = false
     debug_color = "#4fb710"

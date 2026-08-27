@@ -261,6 +261,10 @@ class Nanonaut extends SpriteSheetEngineObject {
 
     #max_jump_time = 0.25
 
+    #invulnerable = false
+    #invulnerability_time = 0
+    #invulnerability_duration = 0.75
+
     static move_speed = 150
     static distance_travelled = 0
 
@@ -290,13 +294,18 @@ class Nanonaut extends SpriteSheetEngineObject {
     }
 
     damage(amount) {
-        if (Nanonauts.game_over) {
+        if (Nanonauts.game_over || this.#invulnerable) {
             return
         }
 
         this.health -= amount
 
         Nanonauts.healthbar.damage()
+
+        // Start i-frames
+        this.#invulnerable = true
+        this.#invulnerability_time =
+            this.#invulnerability_duration
 
         if (this.health <= 0) {
             Nanonauts.game_over_screen()
@@ -367,8 +376,29 @@ class Nanonaut extends SpriteSheetEngineObject {
         }
     }
 
+    process() {
+        super.process()
+
+        if (this.#invulnerable) {
+            this.visible = Math.floor(
+                this.#invulnerability_time * 12
+            ) % 2 === 0
+        } else {
+            this.visible = true
+        }
+    }
+
     physics_process(delta) {
         super.physics_process(delta)
+
+        if (this.#invulnerable) {
+            this.#invulnerability_time -= delta
+
+            if (this.#invulnerability_time <= 0) {
+                this.#invulnerability_time = 0
+                this.#invulnerable = false
+            }
+        }
 
         if (this.#jump_pressed && this.is_grounded) {
             this.velocity_y = -Settings.JUMP_FORCE / 3
