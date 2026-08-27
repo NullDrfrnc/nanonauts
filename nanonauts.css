@@ -30,17 +30,6 @@ html,
 body {
     width: 100%;
     height: 100%;
-        touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-#mobile_controls,
-#mobile_controls * {
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
 }
 
 body {
@@ -463,18 +452,10 @@ canvas {
     touch-action: none;
 }
 
-/* =========================
-   MOBILE CONTROLS
-   ========================= */
-
-#mobile_controls {
+#mobile_controls,
+#mobile_top_controls {
     display: none;
 }
-
-
-/* =========================
-   MOBILE
-   ========================= */
 
 @media (max-width: 900px) {
 
@@ -487,27 +468,20 @@ canvas {
 
         flex-direction: column;
         justify-content: center;
-        align-items: center;
-
         gap: 12px;
     }
 
-    /*
-     * Canvas wordt door de engine later
-     * toegevoegd, dus gebruik order om
-     * de visuele volgorde te bepalen.
-     */
     #game_area canvas {
         order: 1;
 
         max-width: calc(100vw - 24px);
 
+        height: auto;
+
         width: min(
                 calc(100vw - 24px),
                 calc((100vh - 100px) * 4 / 3)
         );
-
-        height: auto;
     }
 
     #mobile_controls {
@@ -524,7 +498,23 @@ canvas {
         align-items: center;
 
         user-select: none;
+        -webkit-user-select: none;
         touch-action: none;
+    }
+
+    #mobile_top_controls {
+        position: absolute;
+
+        display: flex;
+        gap: 10px;
+
+        z-index: 20;
+
+        /*
+         * rechtsboven
+         */
+        top: 12px;
+        right: 12px;
     }
 
     .mobile_controls_left {
@@ -540,11 +530,12 @@ canvas {
     .mobile_controls_right {
         display: flex;
         justify-content: flex-end;
+        gap: 10px;
     }
 
     .mobile_button {
-        width: 70px;
-        height: 60px;
+        width: 90px;
+        height: 75px;
 
         color: var(--green);
 
@@ -557,24 +548,27 @@ canvas {
                 0 0 10px rgba(0, 0, 0, 0.4);
 
         font-family: 'customfont', monospace;
-        font-size: 24px;
+        font-size: 30px;
 
         -webkit-tap-highlight-color: transparent;
-
         touch-action: none;
         user-select: none;
     }
 
     .mobile_button:active {
         color: var(--cyan);
-
         background: #18282c;
-
         border-color: var(--cyan);
 
         box-shadow:
                 inset 0 2px 0 #16262a;
 
         transform: translateY(2px);
+    }
+
+    #mobile_top_controls .mobile_button {
+        width: 70px;
+        height: 55px;
+        font-size: 22px;
     }
 }

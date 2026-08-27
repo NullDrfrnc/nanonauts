@@ -68,7 +68,11 @@
 
         setup_mobile_button("mobile_left", "ArrowLeft")
         setup_mobile_button("mobile_right", "ArrowRight")
-        setup_mobile_button("mobile_jump", "ArrowUp")
+        setup_mobile_button("mobile_jump", "Space")
+
+        setup_mobile_button("mobile_pause", "Escape")
+        setup_mobile_button("mobile_restart", "KeyR")
+
 
         Nanonauts.start();
     });
@@ -79,21 +83,27 @@
 <div class="background-grid"></div>
 
 <main id="game_area">
-    <!-- Canvas wordt door de engine toegevoegd -->
+
+    <div id="mobile_top_controls">
+        <button id="mobile_pause" class="mobile_button">II</button>
+        <button id="mobile_restart" class="mobile_button">R</button>
+    </div>
 
     <div id="mobile_controls">
+
         <div class="mobile_controls_left">
             <button id="mobile_left" class="mobile_button">◀</button>
         </div>
 
-        <div class="mobile_controls_center">
-            <button id="mobile_jump" class="mobile_button">▲</button>
-        </div>
+        <div></div>
 
         <div class="mobile_controls_right">
             <button id="mobile_right" class="mobile_button">▶</button>
+            <button id="mobile_jump" class="mobile_button">▲</button>
         </div>
+
     </div>
+
 </main>
 
 <aside id="settings">

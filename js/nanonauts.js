@@ -312,7 +312,7 @@ class Nanonaut extends SpriteSheetEngineObject {
     }
 
     on_key_pressed(key) {
-        if (Nanonauts.game_over) {
+        if (Nanonauts.game_over || Engine.get_instance().paused) {
             if (key === "KeyR") {
                 Nanonauts.restart()
             }
