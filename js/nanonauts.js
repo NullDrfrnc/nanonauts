@@ -11,7 +11,7 @@ class Nanonauts {
     static robot_spawner;
     static flying_robot_spawner;
     static flying_robot_spawner_2;
-    static start_move_speed = 250;
+    static start_move_speed = 200;
     static distance_ui;
     static healthbar
     static paused_text
@@ -380,10 +380,7 @@ class Nanonaut extends SpriteSheetEngineObject {
 
         if (!this.is_grounded) {
 
-            if (
-                this.#jump_held &&
-                this.#jump_time < this.#max_jump_time
-            ) {
+            if (this.#jump_held && this.#jump_time < this.#max_jump_time) {
                 this.velocity_y -=
                     Settings.JUMP_FORCE * delta
 
@@ -395,17 +392,13 @@ class Nanonaut extends SpriteSheetEngineObject {
             this.y += this.velocity_y * delta
         }
 
-        Nanonaut.move_speed +=
-            Nanonaut.move_speed / 75 * delta
+        Nanonaut.move_speed += Nanonaut.move_speed / 100 * delta
 
-        this.animation_speed =
-            Nanonaut.move_speed / 30
+        this.animation_speed = Nanonaut.move_speed / 30
 
-        Nanonaut.distance_travelled +=
-            Nanonaut.move_speed * delta
+        Nanonaut.distance_travelled += Nanonaut.move_speed * delta
 
-        Nanonauts.distance_ui.text =
-            `${Nanonaut.get_move_distance()}m`
+        Nanonauts.distance_ui.text = `${Nanonaut.get_move_distance()}m`
 
         if (this.#move_right) {
             let new_x = this.x + Settings.MOVE_FORCE * delta
@@ -490,7 +483,7 @@ class Robot extends SpriteSheetEngineObject {
 
     physics_process(delta) {
         super.physics_process(delta)
-        this.x -= Nanonaut.move_speed * 1.2 * delta
+        this.x -= Nanonaut.move_speed * 1.1 * delta
 
         if (this.x + this.width < -100) {
             Engine.get_instance().remove_engine_object(this)
