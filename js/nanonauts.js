@@ -312,12 +312,8 @@ class Nanonaut extends SpriteSheetEngineObject {
     }
 
     on_key_pressed(key) {
-        if (Nanonauts.game_over || Engine.get_instance().paused) {
-            if (key === "KeyR") {
-                Nanonauts.restart()
-            }
-
-            return
+        if (key === "KeyR") {
+            Nanonauts.restart()
         }
 
         if (
@@ -542,7 +538,7 @@ class FlyingRobot extends Robot {
 }
 
 class Healthbar extends EngineObject {
-    hp_offset = 36
+    hp_offset = 36 * 2
 
     hp1 = new Heart()
     hp2 = new Heart()
