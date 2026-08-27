@@ -140,7 +140,8 @@ class Engine {
             this.#last_time = current_time
         }
 
-        const delta = current_time - this.#last_time
+        // Prevent a giant runaway of the physics engine
+        const delta = Math.min(current_time - this.#last_time, 250)
         this.#last_time = current_time
 
         if (!this.paused) {
@@ -163,6 +164,8 @@ class Engine {
                     this.#engine_objects.splice(index, 1)
                 }
             })
+
+            this.#to_remove = []
         }
 
 

@@ -87,6 +87,7 @@ class Nanonauts {
         this.nanonaut = new Nanonaut();
         Nanonaut.move_speed = Nanonauts.start_move_speed;
         Nanonaut.distance_travelled = 0
+        this.nanonaut.x = 80
 
         this.robot_spawner = new RobotSpawner()
         this.robot_spawner.spawn_interval = 3
@@ -154,6 +155,9 @@ class Nanonauts {
         Engine.get_instance().add_engine_object(this.restart_text, 16)
 
         this.event_spawner.spawn()
+
+        // I didn't feel like this was important, don't even see it but claude thinks it's a problem so oh well
+        Engine.get_instance().get_context_2d().imageSmoothingEnabled = falseee
     }
 
     static game_over_screen() {
@@ -285,7 +289,7 @@ class Nanonaut extends SpriteSheetEngineObject {
 
         this.animation_speed = Nanonaut.move_speed / 30
 
-        this.y = 525
+        this.y = Nanonauts.ground.get_hitbox_y() - this.height
     }
 
     damage(amount) {
@@ -446,6 +450,8 @@ class Nanonaut extends SpriteSheetEngineObject {
         }
 
         this.is_grounded = false
+
+        console.log(this.y)
     }
 
     static get_move_distance() {
@@ -481,7 +487,7 @@ class Robot extends SpriteSheetEngineObject {
 
         this.animation_speed = Nanonaut.move_speed / 30
 
-        this.y = 525
+        this.y = Nanonauts.ground.get_hitbox_y() - this.height
     }
 
     on_collisions(others) {
@@ -589,6 +595,7 @@ class Healthbar extends EngineObject {
         ctx.drawImage(this.hp1.sprite, Settings.CANVAS_WIDTH - this.hp_offset, 10)
         ctx.drawImage(this.hp2.sprite, Settings.CANVAS_WIDTH - this.hp_offset * 2, 10)
         ctx.drawImage(this.hp3.sprite, Settings.CANVAS_WIDTH - this.hp_offset * 3, 10)
+        ctx.fillText("hp: ", Settings.CANVAS_WIDTH - this.hp_offset * 5, 70)
     }
 }
 
@@ -601,6 +608,7 @@ class Heart extends SpriteEngineObject {
     }
 }
 
+// Claude's analysis straight up lied about the sprite sheet here, there are no empty cells as it says there are
 class BigBoom extends SpriteSheetEngineObject {
     init() {
         this.animation_speed = 20
@@ -671,9 +679,6 @@ class FlyingRobotSpawner extends EngineObjectSpawnerEngineObject {
 
         this.engine_object = FlyingRobot
 
-        this.spawn_time_variance = 3
-        this.spawn_interval = 7
-
         super.init()
     }
 
@@ -696,9 +701,6 @@ class RobotSpawner extends EngineObjectSpawnerEngineObject {
         this.y = 400
 
         this.engine_object = Robot
-
-        this.spawn_time_variance = 2
-        this.spawn_interval = 4
 
         super.init()
     }
@@ -730,9 +732,6 @@ class RobotSpawner extends EngineObjectSpawnerEngineObject {
 class BushSpawner extends EngineObjectSpawnerEngineObject {
     init() {
         this.engine_object = VariableBushSprite
-
-        this.spawn_time_variance = 0.5
-        this.spawn_interval = 3
 
         super.init()
     }
@@ -787,7 +786,6 @@ class Platform extends SpriteEngineObject {
 }
 
 class Laser extends SpriteEngineObject {
-    #has_damaged = false
     #blocked = false
 
     tip_sprite = new Image()
@@ -866,9 +864,8 @@ class Laser extends SpriteEngineObject {
             other => other instanceof Nanonaut
         )
 
-        if (nanonaut && !this.#has_damaged) {
+        if (nanonaut) {
             nanonaut.damage(1)
-            this.#has_damaged = true
         }
     }
 
@@ -935,7 +932,7 @@ class LaserEvent extends EngineObject {
 
         Engine.get_instance().add_engine_object(
             laser,
-            13
+            14 // Spawn on layer 14 cuz of a visual bug
         )
     }
 
@@ -963,5 +960,21 @@ class RandomEventSpawner extends EngineObjectSpawnerEngineObject {
         const event = new EventClass()
 
         Engine.get_instance().add_engine_object(event, this.layer)
+    }
+}
+
+class Item extends SpriteEngineObject {
+    init() {
+        super.init()
+
+        this.collision = true
+    }
+
+    on_collisions(others) {
+        const nanonaut = others.find(
+            other => other instanceof Nanonaut
+        )
+
+        
     }
 }

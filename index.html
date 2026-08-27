@@ -4,79 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="icon" type="image/png" href="assets/hp_full.png">
     <title>Nanonauts</title>
 
     <link rel="stylesheet" href="nanonauts.css"/>
 
     <script src="js/engine.js"></script>
     <script src="js/nanonauts.js"></script>
-</head>
 
-<script>
-    document.addEventListener('contextmenu', event => event.preventDefault());
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
 
-    window.addEventListener("DOMContentLoaded", () => {
-        const physics_step = document.getElementById("physics_step");
+        window.addEventListener("DOMContentLoaded", () => {
+            const physics_step = document.getElementById("physics_step");
 
-        // Probeer opgeslagen instelling te laden
-        const saved_physics_step = localStorage.getItem("nanonauts_physics_step");
+            // Probeer opgeslagen instelling te laden
+            const saved_physics_step = localStorage.getItem("nanonauts_physics_step");
 
-        if (saved_physics_step !== null) {
-            Settings.PHYSICS_STEP = Number(saved_physics_step);
-        }
+            if (saved_physics_step !== null) {
+                Settings.PHYSICS_STEP = Number(saved_physics_step);
+            }
 
-        // Zet de select op de opgeslagen waarde
-        physics_step.value = Settings.PHYSICS_STEP;
+            // Zet de select op de opgeslagen waarde
+            physics_step.value = Settings.PHYSICS_STEP;
 
-        // Sla iedere wijziging op
-        physics_step.addEventListener("change", (event) => {
-            Settings.PHYSICS_STEP = Number(event.target.value);
+            // Sla iedere wijziging op
+            physics_step.addEventListener("change", (event) => {
+                Settings.PHYSICS_STEP = Number(event.target.value);
 
-            localStorage.setItem(
-                "nanonauts_physics_step",
-                Settings.PHYSICS_STEP.toString()
-            );
-        });
+                localStorage.setItem(
+                    "nanonauts_physics_step",
+                    Settings.PHYSICS_STEP.toString()
+                );
+            });
 
-        function setup_mobile_button(id, key) {
-            const button = document.getElementById(id)
+            function setup_mobile_button(id, key) {
+                const button = document.getElementById(id)
 
-            button.addEventListener("pointerdown", (event) => {
-                event.preventDefault()
+                button.addEventListener("pointerdown", (event) => {
+                    event.preventDefault()
 
-                Engine.get_instance().key_pressed(key)
-            })
+                    Engine.get_instance().key_pressed(key)
+                })
 
-            button.addEventListener("pointerup", (event) => {
-                event.preventDefault()
+                button.addEventListener("pointerup", (event) => {
+                    event.preventDefault()
 
-                Engine.get_instance().key_released(key)
-            })
-
-            button.addEventListener("pointercancel", (event) => {
-                event.preventDefault()
-
-                Engine.get_instance().key_released(key)
-            })
-
-            button.addEventListener("pointerleave", (event) => {
-                if (event.buttons !== 0) {
                     Engine.get_instance().key_released(key)
-                }
-            })
-        }
+                })
 
-        setup_mobile_button("mobile_left", "ArrowLeft")
-        setup_mobile_button("mobile_right", "ArrowRight")
-        setup_mobile_button("mobile_jump", "Space")
+                button.addEventListener("pointercancel", (event) => {
+                    event.preventDefault()
 
-        setup_mobile_button("mobile_pause", "Escape")
-        setup_mobile_button("mobile_restart", "KeyR")
+                    Engine.get_instance().key_released(key)
+                })
+
+                button.addEventListener("pointerleave", (event) => {
+                    if (event.buttons !== 0) {
+                        Engine.get_instance().key_released(key)
+                    }
+                })
+            }
+
+            setup_mobile_button("mobile_left", "ArrowLeft")
+            setup_mobile_button("mobile_right", "ArrowRight")
+            setup_mobile_button("mobile_jump", "Space")
+
+            setup_mobile_button("mobile_pause", "Escape")
+            setup_mobile_button("mobile_restart", "KeyR")
 
 
-        Nanonauts.start();
-    });
-</script>
+            Nanonauts.start();
+        });
+    </script>
+</head>
 
 <body>
 
@@ -137,11 +138,11 @@
         </div>
 
         <div class="control">
-            <span class="key">A</span><span class="key">◀</span>
+            <span class="key">D</span><span class="key">◀</span>
             <span>MOVE RIGHT</span>
         </div>
         <div class="control">
-            <span class="key">D</span><span class="key">▶</span>
+            <span class="key">A</span><span class="key">▶</span>
             <span>MOVE LEFT</span>
         </div>
 
@@ -153,6 +154,12 @@
             <span class="key">TIP:</span>
             <span>HOLD JUMP FOR HIGH JUMP, TAP FOR SHORT JUMP</span>
         </div>
+    </div>
+
+    <div class="panel-footer">
+        <span class="control">
+            <span>font <a href="https://int10h.org/oldschool-pc-fonts/" target="_blank">Web437 Verite 8x16</a> by VileR (int10h.org), CC BY-SA 4.0</span>
+        </span>
     </div>
 </aside>
 
