@@ -1,7 +1,6 @@
 //todo: Make random event spawner
 //todo: make events
 //todo: make laser event with platform
-//todo: Add buttons for mobile version
 //todo: bugfix, robots can damage twice?
 
 class Nanonauts {
@@ -24,15 +23,13 @@ class Nanonauts {
     static clouds;
     static trees;
 
+    static event_spawner
+
     static game_over_text;
     static restart_text;
     static game_over = false;
 
     static start() {
-        let platform = new Platform()
-        platform.y = 150
-        platform.x = Settings.CANVAS_WIDTH - 150
-
         this.game_over = false
 
         this.sky = new Background()
@@ -116,9 +113,18 @@ class Nanonauts {
         this.bush_spawner_1.y = Settings.CANVAS_HEIGHT - 70
         this.bush_spawner_1.x = Settings.CANVAS_WIDTH + 100
 
+        this.bush_spawner_1.spawn_interval = 1.783
+
         this.bush_spawner_2 = new BushSpawner();
         this.bush_spawner_2.y = Settings.CANVAS_HEIGHT - 35
         this.bush_spawner_2.x = Settings.CANVAS_WIDTH + 100
+
+        this.bush_spawner_2.spawn_interval = 2.348
+
+        this.event_spawner = new RandomEventSpawner()
+
+        this.event_spawner.spawn_interval = 20
+        this.event_spawner.spawn_time_variance = 10
 
         Engine.get_instance().add_engine_object(this.sky)
 
@@ -138,10 +144,7 @@ class Nanonauts {
 
         Engine.get_instance().add_engine_object(this.nanonaut, 12)
 
-        Engine.get_instance().add_engine_object(platform, 13)
-        const laser = new Laser()
-        laser.x = Settings.CANVAS_WIDTH + 600
-        Engine.get_instance().add_engine_object(laser, 13)
+        Engine.get_instance().add_engine_object(this.event_spawner, 13)
 
         Engine.get_instance().add_engine_object(this.robot_spawner, 14)
         Engine.get_instance().add_engine_object(this.flying_robot_spawner, 14)
@@ -155,8 +158,7 @@ class Nanonauts {
         Engine.get_instance().add_engine_object(this.game_over_text, 16)
         Engine.get_instance().add_engine_object(this.restart_text, 16)
 
-        this.bush_spawner_2.spawn_interval = 2.348
-        this.bush_spawner_1.spawn_interval = 1.783
+        this.event_spawner.spawn()
     }
 
     static game_over_screen() {
@@ -264,6 +266,7 @@ class Nanonaut extends SpriteSheetEngineObject {
 
     init() {
         this.debug=true
+        this.debug_color="#190023"
 
         this.collision = true
         this.sprite.src = "assets/nanonaut.png"
@@ -326,7 +329,7 @@ class Nanonaut extends SpriteSheetEngineObject {
             this.#jump_held = true
         }
 
-        if (key === "Escape") {
+        if (key === "Escape" && !Nanonauts.game_over) {
             Engine.get_instance().paused =
                 !Engine.get_instance().paused
 
@@ -756,6 +759,10 @@ class Platform extends SpriteEngineObject {
 
     physics_process(delta) {
         this.x -= this.#speed * delta
+
+        if (this.x + this.width < -100) {
+            Engine.get_instance().remove_engine_object(this)
+        }
     }
 }
 
@@ -792,6 +799,10 @@ class Laser extends SpriteEngineObject {
         this.#blocked = false
 
         this.x -= this.#speed * delta
+
+        if (this.x + this.width < -100) {
+            Engine.get_instance().remove_engine_object(this)
+        }
     }
 
     draw(ctx) {
@@ -843,5 +854,94 @@ class Laser extends SpriteEngineObject {
 
     not_colliding() {
         this.#blocked = false
+    }
+}
+
+class LaserEvent extends EngineObject {
+    #start_delay = 0.5
+    #timer = 0
+
+    #double_laser_chance = 0.2
+
+    init() {
+        this.#timer = this.#start_delay
+    }
+
+    physics_process(delta) {
+        this.#timer -= delta
+
+        if (this.#timer > 0) {
+            return
+        }
+
+        this.#spawn_event()
+
+        Engine.get_instance().remove_engine_object(this)
+    }
+
+    #spawn_event() {
+        // Platform
+        const platform = new Platform()
+
+        platform.x = Settings.CANVAS_WIDTH
+        platform.y = 150
+
+        Engine.get_instance().add_engine_object(
+            platform,
+            13
+        )
+
+        // Eerste laser
+        const first_x = this.#random_laser_x()
+
+        this.#spawn_laser(first_x)
+
+        // Kans op tweede laser
+        if (Math.random() < this.#double_laser_chance) {
+            let second_x
+
+            do {
+                second_x = this.#random_laser_x()
+            } while (Math.abs(second_x - first_x) < 200)
+
+            this.#spawn_laser(second_x)
+        }
+    }
+
+    #spawn_laser(x_offset) {
+        const laser = new Laser()
+
+        laser.x = Settings.CANVAS_WIDTH + x_offset
+
+        Engine.get_instance().add_engine_object(
+            laser,
+            13
+        )
+    }
+
+    #random_laser_x() {
+        const min = 800
+        const max = 1600
+
+        return Math.random() * (max - min) + min
+    }
+}
+
+class RandomEventSpawner extends EngineObjectSpawnerEngineObject {
+    init() {
+        super.init()
+    }
+
+    spawn() {
+        const events = [
+            LaserEvent
+        ]
+
+        const EventClass =
+            events[Math.floor(Math.random() * events.length)]
+
+        const event = new EventClass()
+
+        Engine.get_instance().add_engine_object(event, this.layer)
     }
 }
