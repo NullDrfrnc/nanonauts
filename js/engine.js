@@ -25,6 +25,20 @@ class Engine {
 
     paused = false;
 
+    #debug_sequence = [
+        "Numpad4",
+        "Numpad6",
+        "Numpad8",
+        "Numpad2",
+        "NumpadAdd",
+        "NumpadSubtract",
+        "NumpadAdd",
+        "NumpadSubtract"
+    ]
+
+    #debug_sequence_index = 0
+    debug_enabled = false;
+
     constructor() {
         this.#canvas = document.createElement("canvas")
         this.#canvas.width = Settings.CANVAS_WIDTH;
@@ -36,42 +50,16 @@ class Engine {
 
         // Keyboard input
         window.addEventListener("keydown", (e) => {
-            this.#engine_objects.forEach(eo => {
-                eo.on_key_pressed(e.code)
-            })
+            this.#check_debug_sequence(e.code)
+
+            this.key_pressed(e.code)
         })
 
         window.addEventListener("keyup", (e) => {
-            this.#engine_objects.forEach(eo => {
-                eo.on_key_released(e.code)
-            })
+            this.key_released(e.code)
         })
-
-        // Touch input
-        this.#canvas.addEventListener("touchstart", (e) => {
-            e.preventDefault()
-
-            this.#engine_objects.forEach(eo => {
-                eo.on_touch_pressed(e.touches[0])
-            })
-        }, { passive: false })
-
-        this.#canvas.addEventListener("touchend", (e) => {
-            e.preventDefault()
-
-            this.#engine_objects.forEach(eo => {
-                eo.on_touch_released()
-            })
-        }, { passive: false })
-
-        this.#canvas.addEventListener("touchcancel", (e) => {
-            e.preventDefault()
-
-            this.#engine_objects.forEach(eo => {
-                eo.on_touch_released()
-            })
-        }, { passive: false })
     }
+
     // Returns the instance of the engine
     static get_instance() {
         if (!this.#instance)
@@ -99,6 +87,7 @@ class Engine {
         this.#engine_objects.push(engine_object);
         engine_object.layer = layer;
         engine_object.init()
+        engine_object.debug = this.debug_enabled;
     }
 
     remove_engine_object(engine_object) {
@@ -190,6 +179,45 @@ class Engine {
         window.requestAnimationFrame((t) => this.#engine_process_loop(t))
     }
 
+    #check_debug_sequence(key) {
+        if (key === this.#debug_sequence[this.#debug_sequence_index]) {
+            this.#debug_sequence_index++
+
+            if (this.#debug_sequence_index >= this.#debug_sequence.length) {
+                this.toggle_debug()
+                this.#debug_sequence_index = 0
+            }
+
+            return
+        }
+
+        if (key === this.#debug_sequence[0]) {
+            this.#debug_sequence_index = 1
+        } else {
+            this.#debug_sequence_index = 0
+        }
+    }
+
+    toggle_debug() {
+        this.debug_enabled = !this.debug_enabled
+
+        this.#engine_objects.forEach(eo => {
+            eo.debug = this.debug_enabled
+        })
+    }
+
+    key_pressed(key) {
+        this.#engine_objects.forEach(eo => {
+            eo.on_key_pressed(key)
+        })
+    }
+
+    key_released(key) {
+        this.#engine_objects.forEach(eo => {
+            eo.on_key_released(key)
+        })
+    }
+
     get_engine_objects_with_type(type) {
         return this.#engine_objects.filter(eo => eo instanceof type)
     }
@@ -251,12 +279,6 @@ class EngineObject {
     }
 
     on_key_released(key) {
-    }
-
-    on_touch_pressed(touch) {
-    }
-
-    on_touch_released() {
     }
 
     on_collisions(others) {

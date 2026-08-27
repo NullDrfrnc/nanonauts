@@ -1,8 +1,8 @@
 //todo: Make random event spawner
 //todo: make events
 //todo: make laser event with platform
-//todo: Replace kelvin (maybe)
 //todo: Add buttons for mobile version
+//todo: bugfix, robots can damage twice?
 
 class Nanonauts {
     static bush_spawner_1;
@@ -97,20 +97,20 @@ class Nanonauts {
         Nanonaut.distance_travelled = 0
 
         this.robot_spawner = new RobotSpawner()
-        this.robot_spawner.spawn_interval = 5
-        this.robot_spawner.spawn_time_variance = 2
+        this.robot_spawner.spawn_interval = 3
+        this.robot_spawner.spawn_time_variance = 1
 
         this.flying_robot_spawner = new FlyingRobotSpawner()
-        this.flying_robot_spawner.spawn_interval = 6
-        this.flying_robot_spawner.spawn_time_variance = 1.5
-        this.flying_robot_spawner.min_y = 360
-        this.flying_robot_spawner.max_y = 380
+        this.flying_robot_spawner.spawn_interval = 4
+        this.flying_robot_spawner.spawn_time_variance = 1
+        this.flying_robot_spawner.min_y = 250
+        this.flying_robot_spawner.max_y = 270
 
         this.flying_robot_spawner_2 = new FlyingRobotSpawner()
-        this.flying_robot_spawner_2.spawn_interval = 14
-        this.flying_robot_spawner_2.spawn_time_variance = 2
-        this.flying_robot_spawner_2.min_y = 250
-        this.flying_robot_spawner_2.max_y = 270
+        this.flying_robot_spawner_2.spawn_interval = 6
+        this.flying_robot_spawner_2.spawn_time_variance = 3
+        this.flying_robot_spawner_2.min_y = 360
+        this.flying_robot_spawner_2.max_y = 380
 
         this.bush_spawner_1 = new BushSpawner()
         this.bush_spawner_1.y = Settings.CANVAS_HEIGHT - 70
@@ -138,10 +138,10 @@ class Nanonauts {
 
         Engine.get_instance().add_engine_object(this.nanonaut, 12)
 
-        //Engine.get_instance().add_engine_object(platform, 13)
-        //const laser = new Laser()
-        //laser.x = Settings.CANVAS_WIDTH + 600
-        //Engine.get_instance().add_engine_object(laser, 13)
+        Engine.get_instance().add_engine_object(platform, 13)
+        const laser = new Laser()
+        laser.x = Settings.CANVAS_WIDTH + 600
+        Engine.get_instance().add_engine_object(laser, 13)
 
         Engine.get_instance().add_engine_object(this.robot_spawner, 14)
         Engine.get_instance().add_engine_object(this.flying_robot_spawner, 14)
@@ -263,13 +263,18 @@ class Nanonaut extends SpriteSheetEngineObject {
     static distance_travelled = 0
 
     init() {
+        this.debug=true
+
         this.collision = true
         this.sprite.src = "assets/nanonaut.png"
         this.height = 120
         this.width = 100
 
-        this.hitbox_x = 60
-        this.hitbox_offset_x = 20
+        this.hitbox_x = 50
+        this.hitbox_offset_x = 33
+        this.hitbox_y = this.height - 20
+        this.hitbox_offset_y = 20
+
 
         this.sprite_size_x = 182
         this.sprite_size_y = 229
@@ -363,22 +368,6 @@ class Nanonaut extends SpriteSheetEngineObject {
         }
     }
 
-    // TOUCHSCREEN
-    on_touch_pressed(touch) {
-        if (Nanonauts.game_over) {
-            return
-        }
-
-        if (this.is_grounded) {
-            this.#jump_pressed = true
-            this.#jump_held = true
-        }
-    }
-
-    on_touch_released() {
-        this.#jump_held = false
-    }
-
     physics_process(delta) {
         super.physics_process(delta)
 
@@ -444,7 +433,7 @@ class Nanonaut extends SpriteSheetEngineObject {
 
     static get_move_distance() {
         return (
-            Nanonaut.distance_travelled / 300
+            Nanonaut.distance_travelled / 100
         ).toFixed(0)
     }
 }
@@ -453,6 +442,10 @@ class Robot extends SpriteSheetEngineObject {
     #damage = 1
 
     init() {
+        this.debug=true
+        this.debug_color = "#0051ff"
+
+
         this.collision = true
         this.sprite.src = "assets/robot.png"
         this.height = 70
@@ -757,7 +750,7 @@ class Platform extends SpriteEngineObject {
 
         this.sprite.src = "assets/platform.png"
         this.width = 200
-        this.height = 100
+        this.height = 70
 
         this.hitbox_y = this.height / 2
         this.hitbox_offset_y = this.height / 2
@@ -783,6 +776,7 @@ class Laser extends SpriteEngineObject {
 
     init() {
         this.debug = true
+        this.debug_color = "#671212"
 
         this.tip_sprite.src = "assets/laser.png"
         this.sprite.src = "assets/laser_beam.png"
@@ -798,6 +792,9 @@ class Laser extends SpriteEngineObject {
     }
 
     physics_process(delta) {
+        this.y = this.#original_y
+        this.#blocked = false
+
         this.x -= this.#speed * delta
     }
 
@@ -850,6 +847,5 @@ class Laser extends SpriteEngineObject {
 
     not_colliding() {
         this.#blocked = false
-        this.y = this.#original_y
     }
 }
