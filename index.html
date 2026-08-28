@@ -18,17 +18,18 @@
         window.addEventListener("DOMContentLoaded", () => {
             const physics_step = document.getElementById("physics_step");
 
-            // Probeer opgeslagen instelling te laden
             const saved_physics_step = localStorage.getItem("nanonauts_physics_step");
 
-            if (saved_physics_step !== null) {
+            const exists = [...physics_step.options].some(option => option.value === saved_physics_step)
+
+            if (saved_physics_step !== null && exists) {
                 Settings.PHYSICS_STEP = Number(saved_physics_step);
+            } else {
+                Settings.PHYSICS_STEP = 60;
             }
 
-            // Zet de select op de opgeslagen waarde
-            physics_step.value = Settings.PHYSICS_STEP;
+            physics_step.value = String(Settings.PHYSICS_STEP);
 
-            // Sla iedere wijziging op
             physics_step.addEventListener("change", (event) => {
                 Settings.PHYSICS_STEP = Number(event.target.value);
 

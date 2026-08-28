@@ -60,7 +60,6 @@ class Engine {
         })
     }
 
-    // Returns the instance of the engine
     static get_instance() {
         if (!this.#instance)
             this.#instance = new Engine();
@@ -68,7 +67,6 @@ class Engine {
         return this.#instance;
     }
 
-    // Returns the canvas context
     get_context_2d() {
         return this.#canvas.getContext("2d", {alpha: false});
     }
@@ -103,6 +101,15 @@ class Engine {
         this.#last_time = 0
     }
 
+
+    /*
+    * Collision check
+    * Get all objects with collision = true
+    * Loop through them and check for collision through AABB overlap (Through either object height/width or hitbox height/width)
+    * On collision, add it to the collision array of that object in the collisions map
+    * Notify objects that DON'T have a collision that they don't
+    * Notify objects that DO have a collision that they do (potentionally have multiple)
+    */
     #check_collisions() {
         const collidables = this.#engine_objects.filter(eo => eo.collision)
         const collisions = new Map()
@@ -134,13 +141,15 @@ class Engine {
         })
     }
 
-    // The main loop which calls process and physics_process on each object passed into context
+    /**
+     * Main engine loop. Accumulates frame time and advances physics in fixed steps.
+     * Then processes and renders all objects before rendering them in order of layering
+     */
     #engine_process_loop(current_time) {
         if (this.#last_time === 0) {
             this.#last_time = current_time
         }
 
-        // Prevent a giant runaway of the physics engine
         const delta = Math.min(current_time - this.#last_time, 250)
         this.#last_time = current_time
 

@@ -65,7 +65,7 @@ class Nanonauts {
         this.paused_text.font = "customfont"
         this.paused_text.font_size = 96
 
-        this.paused_text.x = 175
+        this.paused_text.x = 150
         this.paused_text.y = 300
 
         this.game_over_text = new TextEngineObject()
@@ -157,7 +157,7 @@ class Nanonauts {
         this.event_spawner.spawn()
 
         // I didn't feel like this was important, don't even see it but claude thinks it's a problem so oh well
-        Engine.get_instance().get_context_2d().imageSmoothingEnabled = falseee
+        Engine.get_instance().get_context_2d().imageSmoothingEnabled = false
     }
 
     static game_over_screen() {
@@ -248,7 +248,8 @@ class Ground extends EngineObject {
 }
 
 class Nanonaut extends SpriteSheetEngineObject {
-    health = 3
+    max_health = 3
+    health = 0
     velocity_y = 0
     is_grounded = false
 
@@ -260,15 +261,18 @@ class Nanonaut extends SpriteSheetEngineObject {
 
     #max_jump_time = 0.25
 
-    #invulnerable = false
-    #invulnerability_time = 0
+    invulnerable = false
+    invulnerability_time = 0
     #invulnerability_duration = 0.75
+
+    #speed_boost_active = false
+    #speed_boost_time = 0
+    #move_force_multiplier = 1
 
     static move_speed = 150
     static distance_travelled = 0
 
     init() {
-        this.debug=true
         this.debug_color="#190023"
 
         this.collision = true
@@ -290,20 +294,22 @@ class Nanonaut extends SpriteSheetEngineObject {
         this.animation_speed = Nanonaut.move_speed / 30
 
         this.y = Nanonauts.ground.get_hitbox_y() - this.height
+
+        this.health = this.max_health
     }
 
     damage(amount) {
-        if (Nanonauts.game_over || this.#invulnerable) {
+        if (Nanonauts.game_over || this.invulnerable) {
             return
         }
 
         this.health -= amount
 
-        Nanonauts.healthbar.damage()
+        Nanonauts.healthbar.update()
 
         // Start i-frames
-        this.#invulnerable = true
-        this.#invulnerability_time =
+        this.invulnerable = true
+        this.invulnerability_time =
             this.#invulnerability_duration
 
         if (this.health <= 0) {
@@ -311,10 +317,30 @@ class Nanonaut extends SpriteSheetEngineObject {
         }
     }
 
+    heal(amount) {
+        if (Nanonauts.game_over) {
+            return
+        }
+
+        if (this.health < this.max_health) {
+            this.health = Math.min(this.health + amount, this.max_health)
+            Nanonauts.healthbar.update()
+        }
+    }
+
+    apply_speed_boost(multiplier, duration) {
+        if (this.#speed_boost_active) {
+            this.#speed_boost_time = duration
+            return
+        }
+
+        this.#speed_boost_active = true
+        this.#speed_boost_time = duration
+        this.#move_force_multiplier = multiplier
+    }
+
     on_collisions(others) {
-        const ground = others.find(
-            other => other instanceof Ground
-        )
+        const ground = others.find(other => other instanceof Ground)
 
         if (ground) {
             this.is_grounded = true
@@ -327,19 +353,13 @@ class Nanonaut extends SpriteSheetEngineObject {
             Nanonauts.restart()
         }
 
-        if (
-            (key === "Space" ||
-                key === "ArrowUp" ||
-                key === "KeyW") &&
-            this.is_grounded
-        ) {
+        if ((key === "Space" || key === "ArrowUp" || key === "KeyW") && this.is_grounded) {
             this.#jump_pressed = true
             this.#jump_held = true
         }
 
         if (key === "Escape" && !Nanonauts.game_over) {
-            Engine.get_instance().paused =
-                !Engine.get_instance().paused
+            Engine.get_instance().paused = !Engine.get_instance().paused
 
             if (Engine.get_instance().paused) {
                 Nanonauts.paused_text.text = "Game Paused"
@@ -358,11 +378,7 @@ class Nanonaut extends SpriteSheetEngineObject {
     }
 
     on_key_released(key) {
-        if (
-            key === "Space" ||
-            key === "ArrowUp" ||
-            key === "KeyW"
-        ) {
+        if (key === "Space" || key === "ArrowUp" || key === "KeyW") {
             this.#jump_held = false
         }
 
@@ -378,9 +394,9 @@ class Nanonaut extends SpriteSheetEngineObject {
     process() {
         super.process()
 
-        if (this.#invulnerable) {
+        if (this.invulnerable) {
             this.visible = Math.floor(
-                this.#invulnerability_time * 12
+                this.invulnerability_time * 12
             ) % 2 === 0
         } else {
             this.visible = true
@@ -390,12 +406,21 @@ class Nanonaut extends SpriteSheetEngineObject {
     physics_process(delta) {
         super.physics_process(delta)
 
-        if (this.#invulnerable) {
-            this.#invulnerability_time -= delta
+        if (this.invulnerable) {
+            this.invulnerability_time -= delta
 
-            if (this.#invulnerability_time <= 0) {
-                this.#invulnerability_time = 0
-                this.#invulnerable = false
+            if (this.invulnerability_time <= 0) {
+                this.invulnerability_time = 0
+                this.invulnerable = false
+            }
+        }
+
+        if (this.#speed_boost_active) {
+            this.#speed_boost_time -= delta
+
+            if (this.#speed_boost_time <= 0) {
+                this.#speed_boost_active = false
+                this.#move_force_multiplier = 1
             }
         }
 
@@ -430,7 +455,7 @@ class Nanonaut extends SpriteSheetEngineObject {
         Nanonauts.distance_ui.text = `${Nanonaut.get_move_distance()}m`
 
         if (this.#move_right) {
-            let new_x = this.x + Settings.MOVE_FORCE * delta
+            let new_x = this.x + Settings.MOVE_FORCE * this.#move_force_multiplier * delta
 
             if (new_x >= Settings.CANVAS_WIDTH - this.width) {
                 new_x = Settings.CANVAS_WIDTH - this.width
@@ -440,7 +465,7 @@ class Nanonaut extends SpriteSheetEngineObject {
         }
 
         if (this.#move_left) {
-            let new_x = this.x - Settings.MOVE_FORCE * 2 * delta
+            let new_x = this.x - Settings.MOVE_FORCE * 2 * this.#move_force_multiplier * delta
 
             if (new_x <= 0) {
                 new_x = 0
@@ -564,41 +589,48 @@ class FlyingRobot extends Robot {
     }
 }
 
-// I hate this whole class with every fiber of my being, but I just needed it to work 🥺👉👈
 class Healthbar extends EngineObject {
-    hp_offset = 36 * 2
-
-    hp1 = new Heart()
-    hp2 = new Heart()
-    hp3 = new Heart()
+    #hearts = []
+    #max_health = 3
+    #heart_spacing = 72
 
     init() {
-        this.hp1 = new Heart()
-        this.hp2 = new Heart()
-        this.hp3 = new Heart()
+        this.#max_health = Nanonauts.nanonaut.health
+
+        for (let i = 0; i < this.#max_health; i++) {
+            this.#hearts.push(new Heart())
+        }
 
         super.init()
     }
 
-    damage() {
-        // I'm pretty sure this is a crime in multiple countries
-        if (this.hp3.sprite.src.endsWith("hp_full.png")) {
-            this.hp3.sprite.src = "assets/hp_empty.png"
-        } else if (this.hp2.sprite.src.endsWith("hp_full.png")) {
-            this.hp2.sprite.src = "assets/hp_empty.png"
-        } else if (this.hp1.sprite.src.endsWith("hp_full.png")) {
-            this.hp1.sprite.src = "assets/hp_empty.png"
-        }
+    update() {
+        const health = Nanonauts.nanonaut.health
+
+        this.#hearts.forEach((heart, index) => {
+            heart.sprite.src =
+                index < health
+                    ? "assets/hp_full.png"
+                    : "assets/hp_empty.png"
+        })
     }
 
     draw(ctx) {
-        ctx.drawImage(this.hp1.sprite, Settings.CANVAS_WIDTH - this.hp_offset, 10)
-        ctx.drawImage(this.hp2.sprite, Settings.CANVAS_WIDTH - this.hp_offset * 2, 10)
-        ctx.drawImage(this.hp3.sprite, Settings.CANVAS_WIDTH - this.hp_offset * 3, 10)
-        ctx.fillText("hp: ", Settings.CANVAS_WIDTH - this.hp_offset * 5, 70)
+        this.#hearts.forEach((heart, index) => {
+            ctx.drawImage(
+                heart.sprite,
+                Settings.CANVAS_WIDTH - this.#heart_spacing * (index + 1),
+                10
+            )
+        })
+
+        ctx.fillText(
+            "hp: ",
+            Settings.CANVAS_WIDTH - this.#heart_spacing * (this.#max_health + 2),
+            70
+        )
     }
 }
-
 class Heart extends SpriteEngineObject {
     constructor() {
         super();
@@ -951,7 +983,8 @@ class RandomEventSpawner extends EngineObjectSpawnerEngineObject {
 
     spawn() {
         const events = [
-            LaserEvent
+            LaserEvent,
+            ItemEvent
         ]
 
         const EventClass =
@@ -963,11 +996,61 @@ class RandomEventSpawner extends EngineObjectSpawnerEngineObject {
     }
 }
 
+class ItemEvent extends EngineObject {
+    #start_delay = 0.5
+    #timer = 0
+
+    init() {
+        this.#timer = this.#start_delay
+    }
+
+    physics_process(delta) {
+        this.#timer -= delta
+
+        if (this.#timer > 0) {
+            return
+        }
+
+        this.#spawn_item()
+
+        Engine.get_instance().remove_engine_object(this)
+    }
+
+    #spawn_item() {
+        const items = [
+            ShieldItem,
+            HealItem,
+            SpeedItem
+        ]
+
+        const ItemClass =
+            items[Math.floor(Math.random() * items.length)]
+
+        const item = new ItemClass()
+
+        // Bovengrens: bovenste flying robot laag
+        const min_y = Nanonauts.flying_robot_spawner.min_y
+
+        // Ondergrens: grond-robot hoogte (zelfde formule als Robot.init())
+        const max_y =
+            Nanonauts.ground.get_hitbox_y() - item.height
+
+        item.x = Settings.CANVAS_WIDTH + 50
+        item.y = min_y + Math.random() * (max_y - min_y)
+
+        Engine.get_instance().add_engine_object(item, 15)
+    }
+}
+
 class Item extends SpriteEngineObject {
+    item_behavior
     init() {
         super.init()
 
         this.collision = true
+
+        this.height = 48
+        this.width = 48
     }
 
     on_collisions(others) {
@@ -975,6 +1058,82 @@ class Item extends SpriteEngineObject {
             other => other instanceof Nanonaut
         )
 
-        
+        if(nanonaut) {
+            this.item_behavior.on_use(nanonaut)
+        }
+
+        Engine.get_instance().remove_engine_object(this)
+    }
+
+    physics_process(delta) {
+        super.physics_process(delta)
+
+        this.x -= Nanonaut.move_speed * delta
+
+        if (this.x + this.width < -100) {
+            Engine.get_instance().remove_engine_object(this)
+            return
+        }
+
+        this.item_behavior.physics_process(delta)
+    }
+}
+
+class ItemBehavior extends EngineObject {
+    on_use(nanonaut) {
+
+    }
+}
+
+class ShieldItemBehavior extends ItemBehavior {
+    #duration = 7
+
+    on_use(nanonaut) {
+        nanonaut.invulnerability_time = this.#duration
+        nanonaut.invulnerable = true
+    }
+}
+class ShieldItem extends Item {
+    init() {
+        super.init()
+
+        this.item_behavior = new ShieldItemBehavior()
+
+        this.sprite.src = "assets/shield.png"
+    }
+}
+
+class HealItem extends Item {
+    init() {
+        super.init()
+
+        this.item_behavior = new HealItemBehavior()
+
+        this.sprite.src = "assets/hp_full.png"
+    }
+}
+
+class HealItemBehavior extends ItemBehavior {
+    on_use(nanonaut) {
+        nanonaut.heal(1)
+    }
+}
+
+class SpeedItemBehavior extends ItemBehavior {
+    #duration = 20
+    #multiplier = 2
+
+    on_use(nanonaut) {
+        nanonaut.apply_speed_boost(this.#multiplier, this.#duration)
+    }
+}
+
+class SpeedItem extends Item {
+    init() {
+        super.init()
+
+        this.item_behavior = new SpeedItemBehavior()
+
+        this.sprite.src = "assets/drugs.png"
     }
 }
